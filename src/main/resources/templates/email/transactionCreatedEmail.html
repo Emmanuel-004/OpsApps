@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transaction Journal - Payku</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333333;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9;
+        }
+        .email-container {
+            max-width: 600px;
+            margin: 20px auto;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid #e0e0e0;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);;
+            padding: 25px;
+            text-align: center;
+            color: white;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .content {
+            padding: 30px;
+        }
+        .greeting {
+            font-size: 16px;
+            margin-bottom: 25px;
+            color: #333333;
+        }
+        .status-box {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .status-label {
+            font-weight: 600;
+            color: #856404;
+            margin-bottom: 5px;
+        }
+        .status-value {
+            font-weight: 700;
+            color: #856404;
+            font-size: 16px;
+        }
+        .transaction-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 25px 0;
+        }
+        .transaction-table th {
+            text-align: left;
+            padding: 12px 15px;
+            background: #f8f9fa;
+            border-bottom: 2px solid #dee2e6;
+            color: #495057;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .transaction-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #dee2e6;
+            color: #333333;
+            font-size: 14px;
+        }
+        .transaction-table tr:last-child td {
+            border-bottom: none;
+        }
+        .transaction-table .label {
+            font-weight: 600;
+            color: #495057;
+            width: 40%;
+        }
+        .transaction-table .value {
+            color: #333333;
+        }
+        .amount-value {
+            font-weight: 700;
+            color: #1a237e;
+        }
+
+        .instructions h3 {
+            margin-top: 0;
+            color: #0d47a1;
+            font-size: 16px;
+        }
+        .footer {
+            background: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            color: #666666;
+            font-size: 12px;
+            border-top: 1px solid #e0e0e0;
+        }
+        .footer .copyright {
+            margin-top: 10px;
+            color: #999999;
+        }
+
+        .virtual-account-note strong {
+            color: #1a237e;
+        }
+    </style>
+</head>
+<body>
+<div class="email-container">
+    <div class="header">
+        <h1>Transaction Journal - Payku</h1>
+    </div>
+
+    <div class="content">
+        <p class="greeting">
+            Hi <strong th:text="${name}">Customer</strong>,<br>
+            Your transaction has been successfully created. Please find the details below:
+        </p>
+
+        <div class="status-box">
+            <div class="status-label">Status:</div>
+            <div class="status-value" th:text="${status}">PROCESSING</div>
+        </div>
+
+        <table class="transaction-table">
+            <tr>
+                <td class="label">Transaction Code</td>
+                <td class="value" th:text="${transactionCode}">TRX-0001</td>
+            </tr>
+            <tr>
+                <td class="label">Virtual Account</td>
+                <td class="value">
+                    <span th:text="${virtualAccount}">1234567890</span>
+                </td>
+            </tr>
+            <tr>
+                <td class="label">Product</td>
+                <td class="value" th:text="${productName}">Premium Subscription</td>
+            </tr>
+            <tr>
+                <td class="label">Payment Gateway</td>
+                <td class="value" th:text="${paymentGateaway}">BCA Virtual Account</td>
+            </tr>
+            <tr>
+                <td class="label">Total Amount</td>
+                <td class="value amount-value" th:text="${'Rp ' + #numbers.formatDecimal(amount, 0, 'POINT', 0, 'COMMA')}">150000</td>
+            </tr>
+        </table>
+
+        <p style="font-size: 14px; color: #666666;">
+            Please complete your payment according to the selected payment gateway.
+            We will notify you once the transaction status changes.
+        </p>
+    </div>
+
+    <div class="footer">
+        <p>© 2026 PayKu. All rights reserved.</p>
+        <p class="copyright">This is an automated email, please do not reply.</p>
+    </div>
+</div>
+</body>
+</html>
