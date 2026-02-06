@@ -29,7 +29,7 @@ public class ProductController {
 
     @GetMapping
     public ResponseEntity<PageResponseDto<ProductResponseDto>> getAllProducts(
-            @RequestParam(defaultValue = "0") Integer page,
+            @RequestParam(defaultValue = "1") Integer page,
             @RequestParam(defaultValue = "5") Integer size) {
         PageResponseDto<ProductResponseDto> pageResponseDto = productService.findAll(page, size);
         return new ResponseEntity<>(pageResponseDto, HttpStatus.OK);

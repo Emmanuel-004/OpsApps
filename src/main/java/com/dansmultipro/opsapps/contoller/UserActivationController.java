@@ -1,20 +1,11 @@
 package com.dansmultipro.opsapps.contoller;
 
-import com.dansmultipro.opsapps.dto.CommonResponseDto;
-import com.dansmultipro.opsapps.dto.CreateResponseDto;
-import com.dansmultipro.opsapps.dto.DeleteResponseDto;
-import com.dansmultipro.opsapps.dto.UpdateResponseDto;
-import com.dansmultipro.opsapps.dto.user.ChangePasswordRequestDto;
-import com.dansmultipro.opsapps.dto.user.PaymentGateawayAdminRequestDto;
-import com.dansmultipro.opsapps.dto.user.RegisterRequestDto;
-import com.dansmultipro.opsapps.dto.user.UpdateUserRequestDto;
 import com.dansmultipro.opsapps.service.UserService;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 @Controller
 @RequestMapping("api/users")

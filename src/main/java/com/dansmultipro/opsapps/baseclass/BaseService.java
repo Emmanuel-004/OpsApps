@@ -1,8 +1,8 @@
 package com.dansmultipro.opsapps.baseclass;
 
 import com.dansmultipro.opsapps.exception.InvalidFormatException;
+import com.dansmultipro.opsapps.exception.NotAllowedException;
 import com.dansmultipro.opsapps.exception.NotFoundException;
-import com.dansmultipro.opsapps.repository.RoleRepository;
 import com.dansmultipro.opsapps.repository.UserRepository;
 import com.dansmultipro.opsapps.service.PrincipalService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,6 +60,16 @@ public abstract class BaseService {
         } catch (IllegalArgumentException e) {
             throw new InvalidFormatException("Invalid UUID format");
 
+        }
+    }
+
+    protected void validatePageAndSize(Integer page, Integer size) {
+        if (page < 1){
+            throw new InvalidFormatException("page cannot be less than 1");
+        }
+
+        if (size < 1){
+            throw new NotAllowedException("size cannot be less than 1");
         }
     }
 }

@@ -42,6 +42,8 @@ public class TransactionHistoryServiceImpl extends BaseService implements Transa
                 () -> new NotFoundException("User not found")
         );
 
+        validatePageAndSize(page, size);
+
         Pageable pageable = PageRequest.of((page-1), size, Sort.by(Sort.Direction.DESC, "createdAt"));
         Page<TransactionHistory> transactionHistories;
         List<TransactionHistoryResponseDto> data = new ArrayList<>();

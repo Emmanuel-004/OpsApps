@@ -64,7 +64,7 @@ public class ProductServiceTest {
 
     @Test
     public void shouldReturnData_whenRequestInvalid() {
-        int page = 0;
+        int page = 1;
         int size = 5;
 
         Product product1 = new Product();
@@ -79,7 +79,7 @@ public class ProductServiceTest {
 
         List<Product> productList = List.of(product1, product2);
 
-        Pageable pageable = PageRequest.of(page, size);
+        Pageable pageable = PageRequest.of((page - 1), size);
 
         Page<Product> products = new PageImpl<>(productList, pageable, productList.size());
 

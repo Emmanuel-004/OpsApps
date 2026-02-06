@@ -34,8 +34,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.mockito.Mockito.when;
-
 @ExtendWith(MockitoExtension.class)
 public class UserServiceTest {
 
@@ -77,7 +75,7 @@ public class UserServiceTest {
     private UserServiceImpl userService;
 
     @Test
-    void testGetAllUsers_Success() {
+    void testGetAllUsers_whenRequestValid() {
         userService.setPrincipalService(principalService);
 
         UUID saId = UUID.randomUUID();
@@ -125,7 +123,7 @@ public class UserServiceTest {
     }
 
     @Test
-    void testGetUserById_Success() {
+    void testGetUserById_whenIdValid() {
         userService.setPrincipalService(principalService);
         UUID saId = UUID.randomUUID();
         UUID userId = UUID.randomUUID();
@@ -160,7 +158,7 @@ public class UserServiceTest {
     }
 
     @Test
-    void testRegisterCustomer_Success() {
+    void testRegisterCustomer_whenRequestValid() {
         userService.setUserRepository(userRepository);
         RegisterRequestDto requestDto = new RegisterRequestDto();
         requestDto.setUserName("newuser");
@@ -204,7 +202,7 @@ public class UserServiceTest {
     }
 
     @Test
-    void testVerifiedCustomer_Success() {
+    void testVerifiedCustomer_whenRequestValid() {
         String email = "test@example.com";
         String verificationCode = "123456";
 
@@ -225,7 +223,7 @@ public class UserServiceTest {
     }
 
     @Test
-    void testChangePassword_Success() {
+    void testChangePassword_whenRequestValid() {
         userService.setPrincipalService(principalService);
 
         UUID userId = UUID.randomUUID();
@@ -262,7 +260,7 @@ public class UserServiceTest {
     }
 
     @Test
-    void testUpdateUser_Success() {
+    void testUpdateUser_whenRequestValid() {
         userService.setPrincipalService(principalService);
 
         UUID userId = UUID.randomUUID();
@@ -294,7 +292,7 @@ public class UserServiceTest {
     }
 
     @Test
-    void testRegisterPaymentGateway_Success() {
+    void testRegisterPaymentGateway_whenRequestValid() {
         userService.setPrincipalService(principalService);
 
         UUID superAdminId = UUID.randomUUID();

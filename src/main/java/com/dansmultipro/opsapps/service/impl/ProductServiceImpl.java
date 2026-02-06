@@ -21,7 +21,6 @@ import com.dansmultipro.opsapps.repository.UserRepository;
 import com.dansmultipro.opsapps.service.ProductService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -57,7 +56,9 @@ public class ProductServiceImpl extends BaseService implements ProductService {
     @Override
     public PageResponseDto<ProductResponseDto> findAll(Integer page, Integer size) {
 
-        Pageable pageable = PageRequest.of(page, size);
+        validatePageAndSize(page, size);
+
+        Pageable pageable = PageRequest.of((page -1), size);
         Page<Product> products =  productRepository.findAll(pageable);
 
         List<ProductResponseDto> responseDto = new ArrayList<>();

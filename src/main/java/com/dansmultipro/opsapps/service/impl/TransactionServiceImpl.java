@@ -57,6 +57,8 @@ public class TransactionServiceImpl extends BaseService implements TransactionSe
         User requestingUser = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("User not found"));
 
+        validatePageAndSize(page, size);
+
         Pageable pageable =  PageRequest.of((page - 1), size, Sort.by("createdAt").descending());
         Page<Transaction> transactions;
         List<TransactionResponseDto> listDto = new ArrayList<>();
@@ -103,6 +105,8 @@ public class TransactionServiceImpl extends BaseService implements TransactionSe
 
         User requestingUser = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("User not found"));
+
+        validatePageAndSize(page, size);
 
         Pageable pageable =  PageRequest.of((page - 1), size, Sort.by("createdAt").descending());
         Page<Transaction> transactions;
