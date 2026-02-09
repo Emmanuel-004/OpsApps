@@ -15,7 +15,6 @@ import java.util.concurrent.ConcurrentHashMap;
 public class RateLimiterUtil {
 
     private final Map<String, Bucket> cache = new ConcurrentHashMap<>();
-    private final Map<String, Integer> burstMap = new ConcurrentHashMap<>();
     private final Map<String, PenaltyInfo> penaltyMap = new ConcurrentHashMap<>();
 
     public boolean tryConsume(String ip) {
