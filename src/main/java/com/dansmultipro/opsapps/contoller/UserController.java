@@ -10,6 +10,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -20,6 +21,7 @@ public class UserController {
     private final UserService userService;
 
     @GetMapping
+    @PreAuthorize("hasAuthority('SA')")
     public ResponseEntity<PageResponseDto<UserResponseDto>> getAllUsers(
             @RequestParam(defaultValue = "1")Integer page,
             @RequestParam(defaultValue = "5")Integer size
@@ -29,6 +31,7 @@ public class UserController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyAuthority('SA', 'PG', 'CUS')")
     public ResponseEntity<UserResponseDto> getUserById(@PathVariable String id) {
         UserResponseDto result = userService.getUserById(id);
         return new ResponseEntity<>(result, HttpStatus.OK);
@@ -41,24 +44,28 @@ public class UserController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyAuthority('SA', 'PG', 'CUS')")
     public ResponseEntity<UpdateResponseDto> updateUser(@PathVariable String id, @RequestBody @Valid UpdateUserRequestDto requestDto) {
-        UpdateResponseDto response = userService.updateCustomer(id, requestDto);
+        UpdateResponseDto response = userService.updateUser(id, requestDto);
         return new   ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @PatchMapping("/change-password")
+    @PreAuthorize("hasAnyAuthority('SA', 'PG', 'CUS')")
     public ResponseEntity<UpdateResponseDto> changePassword(@RequestBody @Valid ChangePasswordRequestDto changePasswordRequestDto) {
         UpdateResponseDto response = userService.changePassword(changePasswordRequestDto);
         return new  ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('SA')")
     public ResponseEntity<DeleteResponseDto> deleteUser(@PathVariable String id) {
-        DeleteResponseDto response = userService.deleteCustomer(id);
+        DeleteResponseDto response = userService.deleteUser(id);
         return new  ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @PostMapping("/gateaway-admin")
+    @PreAuthorize("hasAuthority('SA')")
     public ResponseEntity<CreateResponseDto> createGateawayAdmin(@RequestBody @Valid PaymentGateawayAdminRequestDto requestDto) {
         CreateResponseDto response = userService.registerPaymentGateAway(requestDto);
         return new  ResponseEntity<>(response, HttpStatus.CREATED);

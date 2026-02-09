@@ -10,5 +10,6 @@ import java.util.UUID;
 
 public interface PaymentGateawayAdminRepository extends JpaRepository<PaymentGateawayAdmin, UUID> {
     Optional<PaymentGateawayAdmin> findByGateawayAdmin(User gatewayAdmin);
-    Optional<PaymentGateawayAdmin> findByGateawayAdminAndPaymentGateaway(User gatewayAdmin, PaymentGateaway paymentGateaway);
+    Optional<PaymentGateawayAdmin> findByGateawayAdminId(UUID gateawayAdminId);
+    Optional<PaymentGateawayAdmin> findByGateawayAdminIdAndPaymentGateawayId(UUID adminId, UUID gateawayId);
 }

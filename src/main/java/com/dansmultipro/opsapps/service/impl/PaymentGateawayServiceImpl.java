@@ -58,16 +58,6 @@ public class PaymentGateawayServiceImpl extends BaseService implements PaymentGa
 
     @Override
     public CreateResponseDto create(PaymentGateawayRequestDto requestDto) {
-        AuthorizationPojo principal = principalService.getPrincipal();
-        UUID adminId = validateId(principal.getId());
-
-        User admin = userRepository.findById(adminId).orElseThrow(
-                () -> new NotFoundException("User not found")
-        );
-
-        if (!RoleCode.SA.name().equals(admin.getRole().getCode())) {
-            throw new NotAllowedException("Only admin can create paymentGateaway");
-        }
 
         if (paymentGateawayRepository.existsByCode(requestDto.getCode())) {
             throw new NotAllowedException("Payment Gateaway code already exists");
@@ -88,17 +78,7 @@ public class PaymentGateawayServiceImpl extends BaseService implements PaymentGa
 
     @Override
     public UpdateResponseDto update(String id, UpdatePaymentGateawayRequestDto requestDto) {
-        AuthorizationPojo principal = principalService.getPrincipal();
-        UUID adminId = validateId(principal.getId());
         UUID pgId = validateId(id);
-
-        User admin = userRepository.findById(adminId).orElseThrow(
-                () -> new NotFoundException("User not found")
-        );
-
-        if (!RoleCode.SA.name().equals(admin.getRole().getCode())) {
-            throw new NotAllowedException("Only admin can create paymentGateaway");
-        }
 
         PaymentGateaway existingPg = paymentGateawayRepository.findById(pgId).orElseThrow(
                 () -> new NotFoundException("Payment Gateaway not found")
@@ -131,17 +111,7 @@ public class PaymentGateawayServiceImpl extends BaseService implements PaymentGa
 
     @Override
     public DeleteResponseDto delete(String id) {
-        AuthorizationPojo principal = principalService.getPrincipal();
-        UUID adminId = validateId(principal.getId());
         UUID pgId = validateId(id);
-
-        User admin = userRepository.findById(adminId).orElseThrow(
-                () -> new NotFoundException("User not found")
-        );
-
-        if (!RoleCode.SA.name().equals(admin.getRole().getCode())) {
-            throw new NotAllowedException("Only admin can create paymentGateaway");
-        }
 
         PaymentGateaway existingPg = paymentGateawayRepository.findById(pgId).orElseThrow(
                 () -> new NotFoundException("Payment Gateaway not found")

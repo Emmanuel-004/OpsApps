@@ -24,6 +24,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -50,12 +51,8 @@ public class TransactionServiceImpl extends BaseService implements TransactionSe
     private final MailUtil mailUtil;
 
     @Override
-    public PageResponseDto<TransactionResponseDto> getAllTransactions(Integer page, Integer size) {
-        AuthorizationPojo principal = principalService.getPrincipal();
-        UUID userId = validateId(principal.getId());
-
-        User requestingUser = userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException("User not found"));
+    public PageResponseDto<TransactionResponseDto> getAllTransactions(Integer page, Integer size, String userId, String roleCode) {
+        UUID id = validateId(userId);
 
         validatePageAndSize(page, size);
 
@@ -63,11 +60,11 @@ public class TransactionServiceImpl extends BaseService implements TransactionSe
         Page<Transaction> transactions;
         List<TransactionResponseDto> listDto = new ArrayList<>();
 
-        if (requestingUser.getRole().getCode().equals(RoleCode.PG.name())) {
+        if (roleCode.equals(RoleCode.PG.name())) {
 
-            transactions = transactionRepository.findAllByAdminId(userId, pageable);
+            transactions = transactionRepository.findAllByAdminId(id, pageable);
 
-        }  else if (requestingUser.getRole().getCode().equals(RoleCode.SA.name())) {
+        }  else if (roleCode.equals(RoleCode.SA.name())) {
             transactions = transactionRepository.findAll(pageable);
 
         } else {
@@ -99,11 +96,10 @@ public class TransactionServiceImpl extends BaseService implements TransactionSe
     }
 
     @Override
-    public PageResponseDto<TransactionCustomerResponseDto> getAllTransactionsByCustomer(Integer page, Integer size) {
-        AuthorizationPojo principal = principalService.getPrincipal();
-        UUID userId = validateId(principal.getId());
+    public PageResponseDto<TransactionCustomerResponseDto> getAllTransactionsByCustomer(Integer page, Integer size, String userId, String roleCode) {
+        UUID id = validateId(userId);
 
-        User requestingUser = userRepository.findById(userId)
+        User requestingUser = userRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("User not found"));
 
         validatePageAndSize(page, size);
@@ -112,11 +108,11 @@ public class TransactionServiceImpl extends BaseService implements TransactionSe
         Page<Transaction> transactions;
         List<TransactionCustomerResponseDto> listDto = new ArrayList<>();
 
-        if (!requestingUser.getRole().getCode().equals(RoleCode.CUS.name())) {
+        if (!roleCode.equals(RoleCode.CUS.name())) {
             throw  new NotAllowedException("Only customer allowed to view transactions");
         }
 
-        transactions = transactionRepository.findAllByCustomer_id(userId, pageable);
+        transactions = transactionRepository.findAllByCustomer_id(id, pageable);
 
         for (Transaction transaction : transactions.getContent()) {
             listDto.add(new TransactionCustomerResponseDto(
@@ -140,7 +136,7 @@ public class TransactionServiceImpl extends BaseService implements TransactionSe
 
     }
 
-    @CacheEvict(value = "history", allEntries = true)
+    @CacheEvict(value = "history" , allEntries = true)
     @Override
     @Transactional(rollbackOn =  Exception.class)
     public CreateResponseDto createTransaction(TransactionRequestDto requestDto) {
@@ -153,10 +149,6 @@ public class TransactionServiceImpl extends BaseService implements TransactionSe
         User customer = userRepository.findById(customerId).orElseThrow(
                 () -> new NotFoundException("user not found")
         );
-
-        if (!customer.getRole().getCode().equals(RoleCode.CUS.name())) {
-            throw new NotAllowedException("not allowed to create transaction");
-        }
 
         PaymentGateaway paymentGateaway = paymentGateawayRepository.findById(gateawayId).orElseThrow(
                 () -> new NotFoundException("Payment Gateaway not found")
@@ -192,7 +184,7 @@ public class TransactionServiceImpl extends BaseService implements TransactionSe
 
     }
 
-    @CacheEvict(value = "history", allEntries = true)
+    @CacheEvict(value = {"history", "transactions"}, allEntries = true)
     @Override
     @Transactional(rollbackOn =  Exception.class)
     public CommonResponseDto updateTransaction(String id, String code) {
@@ -205,7 +197,11 @@ public class TransactionServiceImpl extends BaseService implements TransactionSe
                 () -> new NotFoundException("transaction not found")
         );
 
-        verifyPaymentGatewayAdmin(gatewayAdminId, transaction.getPaymentGateway());
+        UUID gateawayId = transaction.getPaymentGateway().getId();
+
+        paymentGateawayAdminRepository.findByGateawayAdminIdAndPaymentGateawayId(gatewayAdminId, gateawayId).orElseThrow(
+                () -> new NotFoundException("You are not admin for this transaction")
+        );
 
         if (!TransactionStatusCode.PROCESSING.name().equals(transaction.getStatus().getCode())) {
             throw new NotAllowedException("transaction already processed");
@@ -225,26 +221,6 @@ public class TransactionServiceImpl extends BaseService implements TransactionSe
         sendTransactionUpdatedEmail(transaction.getCustomer(), updatedTransaction);
 
         return new CommonResponseDto("Transaction " + updatedTransaction.getStatus().getName());
-    }
-
-    private void verifyPaymentGatewayAdmin(UUID adminUserId, PaymentGateaway paymentGateaway) {
-        User adminUser = userRepository.findById(adminUserId).orElseThrow(
-                () -> new NotFoundException("Admin user not found")
-        );
-
-        if (!adminUser.getRole().getCode().equals(RoleCode.PG.name())) {
-            throw new NotAllowedException("Only Payment Gateway Admin can approve/reject transactions");
-        }
-
-        PaymentGateawayAdmin paymentGatewayAdmin = paymentGateawayAdminRepository.findByGateawayAdminAndPaymentGateaway(
-                adminUser, paymentGateaway
-        ).orElseThrow(
-                () -> new NotAllowedException("User is not a Payment Gateway Admin for this transaction")
-        );
-
-        if (!paymentGatewayAdmin.getPaymentGateaway().getId().equals(paymentGateaway.getId())) {
-            throw new NotAllowedException("User is not a Payment Gateway Admin");
-        }
     }
 
     private void createTransactionHistory(Transaction transaction, TransactionStatus status) {

@@ -51,4 +51,10 @@ public class ErrorHandler {
         String error = ex.getMessage();
         return new ResponseEntity<>(new ErrorResponseDto<>(error), HttpStatus.BAD_REQUEST);
     }
+
+    @ExceptionHandler(RateLimitExceededException.class)
+    public ResponseEntity<?> handleRateLimitExceededException(RuntimeException ex) {
+        String error = ex.getMessage();
+        return new ResponseEntity<>(new ErrorResponseDto<>(error), HttpStatus.TOO_MANY_REQUESTS);
+    }
 }

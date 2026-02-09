@@ -7,17 +7,17 @@ import com.dansmultipro.opsapps.dto.history.TransactionHistoryResponseDto;
 import com.dansmultipro.opsapps.exception.NotAllowedException;
 import com.dansmultipro.opsapps.exception.NotFoundException;
 import com.dansmultipro.opsapps.model.TransactionHistory;
-import com.dansmultipro.opsapps.model.User;
-import com.dansmultipro.opsapps.pojo.AuthorizationPojo;
 import com.dansmultipro.opsapps.repository.TransactionHistoryRepository;
 import com.dansmultipro.opsapps.repository.UserRepository;
 import com.dansmultipro.opsapps.service.TransactionHistoryService;
+import com.dansmultipro.opsapps.specification.TransactionHistorySpecification;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.time.format.DateTimeFormatter;
@@ -29,40 +29,30 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class TransactionHistoryServiceImpl extends BaseService implements TransactionHistoryService {
 
-    private final UserRepository userRepository;
     private final TransactionHistoryRepository transactionHistoryRepository;
+    private final UserRepository userRepository;
 
-    @Cacheable(value = "history", key = "'page:'+#page+'size:'+#size")
+    @Cacheable(value = "history", key = "'page:'+#page+'size:'+#size+'userId:'+#userId+'roleCode:'+#roleCode")
     @Override
-    public PageResponseDto<TransactionHistoryResponseDto> getAllHistories(Integer page, Integer size) {
-        AuthorizationPojo principal = principalService.getPrincipal();
-        UUID userId = validateId(principal.getId());
+    public PageResponseDto<TransactionHistoryResponseDto> getAllHistories(Integer page, Integer size, String userId, String roleCode) {
 
-        User user = userRepository.findById(userId).orElseThrow(
+        UUID id = validateId(userId);
+
+        userRepository.findById(id).orElseThrow(
                 () -> new NotFoundException("User not found")
         );
 
         validatePageAndSize(page, size);
 
+        Specification<TransactionHistory> spec = Specification.allOf(
+                TransactionHistorySpecification.filterByRoleAndUser(roleCode, id),
+                TransactionHistorySpecification.orderByCreatedDate()
+        );
+
         Pageable pageable = PageRequest.of((page-1), size, Sort.by(Sort.Direction.DESC, "createdAt"));
-        Page<TransactionHistory> transactionHistories;
+        Page<TransactionHistory> transactionHistories = transactionHistoryRepository.findAll(spec, pageable);
         List<TransactionHistoryResponseDto> data = new ArrayList<>();
-
-        if (user.getRole().getCode().equals(RoleCode.SA.name())) {
-
-            transactionHistories = transactionHistoryRepository.findAll(pageable);
-
-        } else if (user.getRole().getCode().equals(RoleCode.PG.name())) {
-
-            transactionHistories = transactionHistoryRepository.findAllByPaymentGateawayAdminId(userId, pageable);
-
-        } else if (user.getRole().getCode().equals(RoleCode.CUS.name())) {
-
-            transactionHistories = transactionHistoryRepository.findAllByCustomerId(userId, pageable);
-
-        } else {
-            throw new NotAllowedException("User not authorized");
-        }
+        
 
         for (TransactionHistory transactionHistory : transactionHistories.getContent()) {
             data.add( new  TransactionHistoryResponseDto(

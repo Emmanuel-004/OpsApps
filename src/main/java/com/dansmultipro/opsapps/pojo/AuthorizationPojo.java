@@ -9,4 +9,5 @@ import lombok.Setter;
 @AllArgsConstructor
 public class AuthorizationPojo {
     private String id;
+    private String roleCode;
 }

@@ -2,8 +2,11 @@ package com.dansmultipro.opsapps.contoller;
 
 import com.dansmultipro.opsapps.dto.auth.LoginRequestDto;
 import com.dansmultipro.opsapps.dto.auth.LoginResponseDto;
+import com.dansmultipro.opsapps.dto.auth.RefreshTokenRequestDto;
+import com.dansmultipro.opsapps.dto.auth.RefreshTokenResponseDto;
 import com.dansmultipro.opsapps.service.UserService;
 import com.dansmultipro.opsapps.util.JwtUtil;
+import io.jsonwebtoken.Claims;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -28,24 +31,50 @@ public class AuthController {
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
 
-    @Value("${jwt.token.expiration}")
-    private Long expirationDuration;
-
     @PostMapping("/login")
     public ResponseEntity<LoginResponseDto> login(@RequestBody @Valid LoginRequestDto requestDto) {
-        Timestamp duration  = Timestamp.valueOf(LocalDateTime.now().plusSeconds(expirationDuration));
         var user = userService.getUserByEmailAndPassword(requestDto.getEmail(), requestDto.getPassword());
 
         var auth = new UsernamePasswordAuthenticationToken(requestDto.getEmail(), requestDto.getPassword());
         authenticationManager.authenticate(auth);
 
-        var token = jwtUtil.generateToken(user.getId().toString(), duration);
-
+        var accessToken = jwtUtil.generateAccessToken(user.getId().toString(), user.getRole().getCode());
+        var refreshToken = jwtUtil.generateRefreshToken(user.getId().toString(), user.getRole().getCode());
         return new ResponseEntity<>(new LoginResponseDto(
                 user.getUserName(),
                 user.getRole().getCode(),
-                token
+                accessToken,
+                refreshToken
         ),
+                HttpStatus.OK
+        );
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<RefreshTokenResponseDto> refresh(@RequestBody @Valid RefreshTokenRequestDto requestDto) {
+        Claims claims = jwtUtil.validateToken(requestDto.getRefreshToken());
+
+        if (!jwtUtil.isRefreshToken(claims)) {
+            throw new RuntimeException("Invalid refresh token");
+        }
+
+        if (jwtUtil.isTokenExpired(claims)) {
+            throw new RuntimeException("Token expired");
+        }
+
+        String id = jwtUtil.extractId(claims);
+        String roleCode = jwtUtil.extractRoleCode(claims);
+
+        var user = userService.getUserById(id);
+
+        var newAccessToken = jwtUtil.generateAccessToken(id, roleCode);
+        var newRefreshToken = jwtUtil.generateRefreshToken(id, roleCode);
+
+        return new ResponseEntity<>(
+                new RefreshTokenResponseDto(
+                        newAccessToken,
+                        newRefreshToken
+                ),
                 HttpStatus.OK
         );
     }

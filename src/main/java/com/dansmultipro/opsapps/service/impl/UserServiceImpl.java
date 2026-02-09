@@ -23,6 +23,8 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -80,6 +82,7 @@ public class UserServiceImpl extends BaseService implements UserService {
         return verifyUser;
     }
 
+    @Cacheable(value = "users", key = "'page:'+page+'size:'+size")
     @Override
     public PageResponseDto<UserResponseDto> getAllUsers(Integer page, Integer size) {
         AuthorizationPojo principal = principalService.getPrincipal();
@@ -116,17 +119,7 @@ public class UserServiceImpl extends BaseService implements UserService {
 
     @Override
     public UserResponseDto getUserById(String id) {
-        AuthorizationPojo principal = principalService.getPrincipal();
-        UUID saId = validateId(principal.getId());
         UUID userId = validateId(id);
-
-        User admin = userRepository.findById(saId).orElseThrow(
-                () -> new UsernameNotFoundException("User not found")
-        );
-
-        if (!admin.getRole().getCode().equals(RoleCode.SA.name())) {
-            throw new NotAllowedException("not allowed to access");
-        }
 
         User user = userRepository.findById(userId).orElseThrow(
                 () -> new NotFoundException("User not found")
@@ -140,6 +133,7 @@ public class UserServiceImpl extends BaseService implements UserService {
         );
     }
 
+    @CacheEvict(value = "users", allEntries = true)
     @Override
     @Transactional(rollbackOn =  Exception.class)
     public CreateResponseDto registerCustomer(RegisterRequestDto requestDto) {
@@ -217,15 +211,16 @@ public class UserServiceImpl extends BaseService implements UserService {
     }
 
     @Override
-    public UpdateResponseDto updateCustomer(String id, UpdateUserRequestDto requestDto) {
+    public UpdateResponseDto updateUser(String id, UpdateUserRequestDto requestDto) {
         AuthorizationPojo principal = principalService.getPrincipal();
         UUID userId = validateId(principal.getId());
+        UUID requestId = validateId(id);
 
         User existingUser = userRepository.findById(userId).orElseThrow(
                 () -> new NotFoundException("User not found")
         );
 
-        if (!existingUser.getId().equals(userId)) {
+        if (!existingUser.getId().equals(requestId)) {
             if (!existingUser.getRole().getCode().equals(RoleCode.SA.name())) {
                 throw new NotAllowedException("not allowed to access");
             }
@@ -243,8 +238,9 @@ public class UserServiceImpl extends BaseService implements UserService {
         return new UpdateResponseDto(updatedUser.getVersion(), "User updated successfully");
     }
 
+    @CacheEvict(value = "users", allEntries = true)
     @Override
-    public DeleteResponseDto deleteCustomer(String id) {
+    public DeleteResponseDto deleteUser(String id) {
         AuthorizationPojo principal = principalService.getPrincipal();
         UUID adminId = validateId(principal.getId());
         UUID userId = validateId(id);
@@ -270,6 +266,7 @@ public class UserServiceImpl extends BaseService implements UserService {
 
     }
 
+    @CacheEvict(value = "users", allEntries = true)
     @Override
     @Transactional(rollbackOn =  Exception.class)
     public CreateResponseDto registerPaymentGateAway(PaymentGateawayAdminRequestDto requestDto) {

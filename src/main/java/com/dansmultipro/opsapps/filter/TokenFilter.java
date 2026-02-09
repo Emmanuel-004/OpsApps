@@ -8,12 +8,14 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 @Component
@@ -46,8 +48,14 @@ public class TokenFilter extends OncePerRequestFilter {
                 var token = authHeader.substring(7);
                 var claims = jwtUtil.validateToken(token);
 
-                var data = new AuthorizationPojo(claims.get("id").toString());
-                var auth = new UsernamePasswordAuthenticationToken(data, null, null);
+                var roleCode = claims.get("roleCode").toString();
+                var data = new AuthorizationPojo(claims.get("id").toString(), roleCode);
+
+                List<SimpleGrantedAuthority> authorities = List.of(
+                        new SimpleGrantedAuthority(roleCode)
+                );
+
+                var auth = new UsernamePasswordAuthenticationToken(data, null, authorities);
 
                 SecurityContextHolder.getContext().setAuthentication(auth);
                 filterChain.doFilter(request, response);

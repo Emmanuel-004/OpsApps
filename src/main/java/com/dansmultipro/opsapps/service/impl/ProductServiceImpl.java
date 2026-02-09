@@ -83,12 +83,6 @@ public class ProductServiceImpl extends BaseService implements ProductService {
     @Override
     @Transactional(rollbackOn =  Exception.class)
     public CreateResponseDto createProduct(ProductRequestDto requestDto) {
-        AuthorizationPojo principal = principalService.getPrincipal();
-        UUID adminId = validateId(principal.getId());
-
-        User admin = userRepository.findById(adminId).orElseThrow(
-                () -> new NotFoundException("user not found")
-        );
 
         if (productRepository.existsByCode(requestDto.getCode())) {
             throw new NotAllowedException("product code already exists");
@@ -96,10 +90,6 @@ public class ProductServiceImpl extends BaseService implements ProductService {
 
         if (productRepository.existsByName(requestDto.getName())) {
             throw new NotAllowedException("product code already exists");
-        }
-
-        if (!admin.getRole().getCode().equals(RoleCode.SA.name())){
-            throw new NotAllowedException("Only admins can create products");
         }
 
         Product product = new Product();
@@ -115,17 +105,7 @@ public class ProductServiceImpl extends BaseService implements ProductService {
     @Override
     @Transactional(rollbackOn =  Exception.class)
     public UpdateResponseDto updateProduct(String id, UpdateProductRequestDto requestDto) {
-        AuthorizationPojo principal = principalService.getPrincipal();
-        UUID adminId = validateId(principal.getId());
         UUID productId = validateId(id);
-
-        User admin = userRepository.findById(adminId).orElseThrow(
-                () -> new NotFoundException("user not found")
-        );
-
-        if (!admin.getRole().getCode().equals(RoleCode.SA.name())){
-            throw new NotAllowedException("Only admins can update products");
-        }
 
         Product existingProduct = productRepository.findById(productId).orElseThrow(
                 () -> new NotFoundException("product not found")
@@ -160,17 +140,7 @@ public class ProductServiceImpl extends BaseService implements ProductService {
     @Override
     @Transactional(rollbackOn =  Exception.class)
     public DeleteResponseDto deleteProduct(String id) {
-        AuthorizationPojo principal = principalService.getPrincipal();
-        UUID adminId = validateId(principal.getId());
         UUID productId = validateId(id);
-
-        User admin = userRepository.findById(adminId).orElseThrow(
-                () -> new NotFoundException("user not found")
-        );
-
-        if (!admin.getRole().getCode().equals(RoleCode.SA.name())){
-            throw new NotAllowedException("Only admins can delete products");
-        }
 
         Product existingProduct = productRepository.findById(productId).orElseThrow(
                 () -> new NotFoundException("product not found")

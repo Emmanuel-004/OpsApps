@@ -14,7 +14,7 @@ import java.util.UUID;
 public class BaseModel {
     @Id
     @Column(length = 36)
-    private UUID Id;
+    private UUID id;
 
     @Column(nullable = false)
     private LocalDateTime createdAt;

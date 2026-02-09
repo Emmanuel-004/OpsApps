@@ -15,8 +15,8 @@ public interface TransactionRepository extends JpaRepository<Transaction, UUID> 
     Page<Transaction> findAllByCustomer_id(UUID userId, Pageable pageable);
 
     @Query("SELECT t FROM Transaction t " +
-            "INNER JOIN PaymentGateawayAdmin pga ON t.paymentGateway.Id = pga.paymentGateaway.Id " +
-            "WHERE pga.gateawayAdmin.Id = :adminId")
+            "INNER JOIN PaymentGateawayAdmin pga ON t.paymentGateway.id = pga.paymentGateaway.id " +
+            "WHERE pga.gateawayAdmin.id = :adminId")
     Page<Transaction> findAllByAdminId(@Param("adminId") UUID adminId, Pageable pageable);
 
     Boolean existsByCustomer(User customer);

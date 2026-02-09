@@ -1,5 +1,6 @@
 package com.dansmultipro.opsapps.config;
 
+//import com.dansmultipro.opsapps.filter.RateLimiterFilter;
 import com.dansmultipro.opsapps.filter.TokenFilter;
 import com.dansmultipro.opsapps.service.UserService;
 import org.springframework.context.annotation.Bean;
@@ -35,8 +36,9 @@ public class SecurityConfig {
     public List<RequestMatcher> getMatchers() {
         var matchers = new ArrayList<RequestMatcher>();
         matchers.add(PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.POST, "/api/auth/login"));
+        matchers.add(PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.GET, "/api/auth/refresh"));
         matchers.add(PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.POST, "/api/users/register"));
-        matchers.add(PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.GET, "/api/users/verify"));//get
+        matchers.add(PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.GET, "/api/users/verify"));
         return matchers;
     }
 
@@ -61,6 +63,7 @@ public class SecurityConfig {
 
         http
                 .addFilterBefore(tokenFilter, UsernamePasswordAuthenticationFilter.class);
+//                .addFilterBefore(rateLimiterFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

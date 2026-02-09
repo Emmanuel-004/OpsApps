@@ -12,8 +12,8 @@ public interface UserService extends UserDetailsService {
     CreateResponseDto registerCustomer(RegisterRequestDto requestDto);
     CommonResponseDto verifiedCustomer(String email, String verificationCode);
     UpdateResponseDto changePassword(ChangePasswordRequestDto requestDto);
-    UpdateResponseDto updateCustomer(String id, UpdateUserRequestDto requestDto);
-    DeleteResponseDto deleteCustomer(String id);
+    UpdateResponseDto updateUser(String id, UpdateUserRequestDto requestDto);
+    DeleteResponseDto deleteUser(String id);
     CreateResponseDto registerPaymentGateAway(PaymentGateawayAdminRequestDto requestDto);
 
 }
