@@ -82,7 +82,6 @@ public class UserServiceImpl extends BaseService implements UserService {
         return verifyUser;
     }
 
-    @Cacheable(value = "users", key = "'page:'+page+'size:'+size")
     @Override
     public PageResponseDto<UserResponseDto> getAllUsers(Integer page, Integer size) {
         AuthorizationPojo principal = principalService.getPrincipal();
@@ -133,7 +132,6 @@ public class UserServiceImpl extends BaseService implements UserService {
         );
     }
 
-    @CacheEvict(value = "users", allEntries = true)
     @Override
     @Transactional(rollbackOn =  Exception.class)
     public CreateResponseDto registerCustomer(RegisterRequestDto requestDto) {

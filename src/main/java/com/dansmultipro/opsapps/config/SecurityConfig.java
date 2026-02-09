@@ -1,6 +1,7 @@
 package com.dansmultipro.opsapps.config;
 
 //import com.dansmultipro.opsapps.filter.RateLimiterFilter;
+import com.dansmultipro.opsapps.filter.RateLimiterFilter;
 import com.dansmultipro.opsapps.filter.TokenFilter;
 import com.dansmultipro.opsapps.service.UserService;
 import org.springframework.context.annotation.Bean;
@@ -55,15 +56,15 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http, TokenFilter tokenFilter) throws Exception{
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, TokenFilter tokenFilter, RateLimiterFilter rateLimiterFilter) throws Exception{
         http
                 .cors(AbstractHttpConfigurer::disable)
                 .csrf(AbstractHttpConfigurer::disable)
                 .logout(AbstractHttpConfigurer::disable);
 
         http
+                .addFilterBefore(rateLimiterFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(tokenFilter, UsernamePasswordAuthenticationFilter.class);
-//                .addFilterBefore(rateLimiterFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

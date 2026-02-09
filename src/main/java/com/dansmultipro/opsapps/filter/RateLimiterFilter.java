@@ -33,14 +33,10 @@ public class RateLimiterFilter extends OncePerRequestFilter {
             boolean matched = requestMatchers.stream()
                     .anyMatch(requestMatcher -> requestMatcher.matches(request));
 
-            if (!matched) {
-                filterChain.doFilter(request, response);
-                return;
+            if (matched) {
+                String ip = request.getRemoteAddr();
+                validateRateLimit(ip);
             }
-
-            String ip = request.getRemoteAddr();
-
-            validateRateLimit(ip);
 
             filterChain.doFilter(request, response);
 
