@@ -13,7 +13,8 @@ import java.util.concurrent.ConcurrentHashMap;
 public class RateLimiterUtil {
 
     private final Map<String, Bucket> cache = new ConcurrentHashMap<>();
-    private final Map<String, PenaltyInfo> penaltyMap = new ConcurrentHashMap<>();
+    private final Map<String, Integer> burstMap =  new ConcurrentHashMap<>();
+    private final Map<String, Instant> penaltyMap = new ConcurrentHashMap<>();
 
     public boolean tryConsume(String ip) {
         Bucket bucket = resolveBucket(ip);
@@ -21,18 +22,20 @@ public class RateLimiterUtil {
     }
 
     public Duration getNewDuration(String ip) {
-        PenaltyInfo info = penaltyMap.get(ip);
+        Instant now = Instant.now();
+        Instant penaltyExpiresAt = penaltyMap.get(ip);
 
-        if (info == null || info.isExpired()) {
-            int newLevel = (info == null) ? 1 : info.level + 1;
-
-            Duration newDuration = calculateDuration(newLevel);
-            penaltyMap.put(ip, new PenaltyInfo(newLevel, newDuration));
-
-            return newDuration;
+        if (penaltyExpiresAt != null && now.isBefore(penaltyExpiresAt)) {
+            int currentBurst = burstMap.getOrDefault(ip, 0);
+            return Duration.ofMinutes(3).multipliedBy(currentBurst);
         }
 
-        return info.penaltyDuration;
+        Integer burstCount = burstMap.compute(ip, (key,value) -> value == null ? 1 : value + 1);
+        Duration base = Duration.ofMinutes(3);
+        Duration newDuration = base.multipliedBy(burstCount);
+        penaltyMap.put(ip, now.plus(newDuration));
+
+        return newDuration;
     }
 
     public void extendRefill(String ip, Duration newDuration) {
@@ -42,17 +45,8 @@ public class RateLimiterUtil {
         BucketConfiguration newConfig = BucketConfiguration.builder()
                 .addLimit(limit -> limit.capacity(5).refillIntervally(5, newDuration))
                 .build();
-        bucket.replaceConfiguration(newConfig, TokensInheritanceStrategy.AS_IS);
-    }
 
-    private Duration calculateDuration(int level) {
-        return switch (level) {
-            case 1 -> Duration.ofMinutes(3);
-            case 2 -> Duration.ofMinutes(6);
-            case 3 -> Duration.ofMinutes(15);
-            case 4 -> Duration.ofMinutes(30);
-            default -> Duration.ofHours(1);
-        };
+        bucket.replaceConfiguration(newConfig, TokensInheritanceStrategy.AS_IS);
     }
 
     private Bucket resolveBucket(String ip) {
@@ -65,25 +59,16 @@ public class RateLimiterUtil {
                 .build();
     }
 
-    @Scheduled(fixedRate = 600000)
-    public void cleanup() {
-        penaltyMap.entrySet().removeIf(entry -> entry.getValue().isExpired());
+    public void resetBucket(String ip) {
+        cache.remove(ip);
+        burstMap.remove(ip);
+        penaltyMap.remove(ip);
     }
 
-    private static class PenaltyInfo {
-        final int level;
-        final Duration penaltyDuration;
-        final Instant expiryTime;
-
-        PenaltyInfo(int level, Duration penaltyDuration) {
-            this.level = Math.min(level, 5);
-            this.penaltyDuration = penaltyDuration;
-
-            this.expiryTime = Instant.now().plus(penaltyDuration).plusSeconds(120);
-        }
-
-        boolean isExpired() {
-            return Instant.now().isAfter(expiryTime);
-        }
+    @Scheduled(cron = "0 0 0 * * *")
+    public void scheduleReset() {
+        cache.clear();
+        burstMap.clear();
+        penaltyMap.clear();
     }
 }
