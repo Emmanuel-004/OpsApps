@@ -47,13 +47,17 @@ public class RateLimiterFilter extends OncePerRequestFilter {
     }
 
     private void validateRateLimit(String ip) {
+
         if (!rateLimiterUtil.tryConsume(ip)) {
+            Duration penalty = rateLimiterUtil.getNewDuration(ip);
+            rateLimiterUtil.extendRefill(ip, penalty);
 
-            Duration newDuration = rateLimiterUtil.getNewDuration(ip);
-            rateLimiterUtil.extendRefill(ip, newDuration);
+            String formatted = String.format("%02d:%02d",
+                    penalty.toMinutesPart(),
+                    penalty.toSecondsPart());
 
-            String formatted = String.format("%02d:%02d", newDuration.toMinutesPart(),newDuration.toSecondsPart());
-            throw new RateLimitExceededException("Rate limit exceeded. Please retry after "+formatted+" Minute");
+            throw new RateLimitExceededException(
+                    "Rate limit exceeded. Please retry after " + formatted + " minutes");
         }
     }
 
