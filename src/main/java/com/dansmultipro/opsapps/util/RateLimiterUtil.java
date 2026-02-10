@@ -1,8 +1,6 @@
 package com.dansmultipro.opsapps.util;
 
-import io.github.bucket4j.Bucket;
-import io.github.bucket4j.BucketConfiguration;
-import io.github.bucket4j.TokensInheritanceStrategy;
+import io.github.bucket4j.*;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -39,12 +37,13 @@ public class RateLimiterUtil {
 
     public void extendRefill(String ip, Duration newDuration) {
 
-        Bucket bucket = resolveBucket(ip);
+        cache.remove(ip);
 
-        BucketConfiguration newConfig = BucketConfiguration.builder()
-                .addLimit(limit -> limit.capacity(5).refillIntervally(5, newDuration))
+        Bucket newBucket = Bucket.builder()
+                .addLimit(Bandwidth.classic(5, Refill.intervally(5, newDuration)))
                 .build();
-        bucket.replaceConfiguration(newConfig, TokensInheritanceStrategy.AS_IS);
+
+        cache.put(ip, newBucket);
     }
 
     private Duration calculateDuration(int level) {
@@ -62,14 +61,26 @@ public class RateLimiterUtil {
     }
 
     private Bucket newBucket(String ip) {
+        PenaltyInfo info = penaltyMap.get(ip);
+        Duration duration;
+
+        if (info != null && !info.isExpired()) {
+            duration = info.penaltyDuration;
+        } else {
+            duration = Duration.ofMinutes(1);
+        }
+
         return Bucket.builder()
-                .addLimit(limit -> limit.capacity(5).refillIntervally(5, Duration.ofMinutes(3)))
+                .addLimit(Bandwidth.classic(5, Refill.intervally(5, duration)))
                 .build();
     }
 
     @Scheduled(fixedRate = 600000)
     public void cleanup() {
+
         penaltyMap.entrySet().removeIf(entry -> entry.getValue().isExpired());
+
+        cache.keySet().removeIf(ip -> !penaltyMap.containsKey(ip));
     }
 
     private static class PenaltyInfo {
@@ -81,7 +92,7 @@ public class RateLimiterUtil {
             this.level = Math.min(level, 5);
             this.penaltyDuration = penaltyDuration;
 
-            this.expiryTime = Instant.now().plus(penaltyDuration).plusSeconds(120);
+            this.expiryTime = Instant.now().plus(penaltyDuration).plus(penaltyDuration);
         }
 
         boolean isExpired() {
