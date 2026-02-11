@@ -82,8 +82,6 @@ public class TransactionServiceTest {
         saUser.setId(userId);
         saUser.setRole(saRole);
 
-        AuthorizationPojo principal = new AuthorizationPojo(saUser.getId().toString(), saRole.getCode());
-
         int page = 1;
         int size = 5;
         Pageable pageable = PageRequest.of((page - 1), size, Sort.by("createdAt").descending());
@@ -122,7 +120,6 @@ public class TransactionServiceTest {
 
     @Test
     public void shouldReturnAllTransactions_whenUserIsPG() {
-        transactionService.setPrincipalService(principalService);
 
         UUID userId = UUID.randomUUID();
 
@@ -132,8 +129,6 @@ public class TransactionServiceTest {
         User pgUser = new User();
         pgUser.setId(userId);
         pgUser.setRole(pgRole);
-
-        AuthorizationPojo principal = new AuthorizationPojo(pgUser.getId().toString(), pgRole.getCode());
 
         int page = 1;
         int size = 5;
@@ -172,7 +167,6 @@ public class TransactionServiceTest {
 
     @Test
     public void shouldReturnTransactionsByCustomer_whenUserIsCustomer() {
-        transactionService.setPrincipalService(principalService);
 
         UUID userId = UUID.randomUUID();
 
@@ -182,8 +176,6 @@ public class TransactionServiceTest {
         User customer = new User();
         customer.setId(userId);
         customer.setRole(customerRole);
-
-        AuthorizationPojo principal = new AuthorizationPojo(customer.getId().toString(), customerRole.getCode());
 
         int page = 1;
         int size = 5;

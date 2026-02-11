@@ -12,11 +12,13 @@ import com.dansmultipro.opsapps.service.impl.TransactionHistoryServiceImpl;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.*;
+import org.springframework.data.jpa.domain.Specification;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -40,8 +42,7 @@ public class TransactionHistoryServiceTest {
 
     @Test
     public void shouldReturnAllHistories_whenUserIsSA() {
-        transactionHistoryService.setPrincipalService(principalService);
-        // Arrange
+
         UUID userId = UUID.randomUUID();
 
         Role saRole = new Role();
@@ -51,8 +52,6 @@ public class TransactionHistoryServiceTest {
         saUser.setId(userId);
         saUser.setRole(saRole);
 
-        AuthorizationPojo principal = new AuthorizationPojo(saUser.getId().toString(), saRole.getCode());
-
         int page = 1;
         int size = 5;
         Pageable pageable = PageRequest.of((page-1), size, Sort.by(Sort.Direction.DESC, "createdAt"));
@@ -80,24 +79,24 @@ public class TransactionHistoryServiceTest {
         List<TransactionHistory> history = List.of(history1, history2);
         Page<TransactionHistory> historyPage = new PageImpl<>(history, pageable, 2);
 
-        Mockito.when(principalService.getPrincipal()).thenReturn(principal);
+        ArgumentCaptor<Specification<TransactionHistory>> captor = ArgumentCaptor.forClass(Specification.class);
+
+        Mockito.when(transactionHistoryRepository.findAll(captor.capture(), Mockito.eq(pageable))).thenReturn(historyPage);
+
         Mockito.when(userRepository.findById(userId)).thenReturn(Optional.of(saUser));
-        Mockito.when(transactionHistoryRepository.findAll(pageable)).thenReturn(historyPage);
 
         PageResponseDto<TransactionHistoryResponseDto> result = transactionHistoryService.getAllHistories(page, size, userId.toString(), saRole.getCode());
 
         Assertions.assertEquals(2, result.getTotalElements());
         Assertions.assertEquals("TRX-001", result.getData().getFirst().getCode());
 
-        Mockito.verify(principalService, Mockito.times(1)).getPrincipal();
         Mockito.verify(userRepository, Mockito.times(1)).findById(userId);
-        Mockito.verify(transactionHistoryRepository, Mockito.times(1)).findAll(pageable);
+        Mockito.verify(transactionHistoryRepository, Mockito.times(1)).findAll(Mockito.any(Specification.class), Mockito.any(Pageable.class));
     }
 
     @Test
     public void shouldReturnAllHistories_whenUserIsPG() {
-        transactionHistoryService.setPrincipalService(principalService);
-        // Arrange
+
         UUID userId = UUID.randomUUID();
 
         Role pgRole = new Role();
@@ -107,8 +106,6 @@ public class TransactionHistoryServiceTest {
         pgUser.setId(userId);
         pgUser.setRole(pgRole);
 
-        AuthorizationPojo principal = new AuthorizationPojo(pgUser.getId().toString(), pgRole.getCode());
-
         int page = 1;
         int size = 5;
         Pageable pageable = PageRequest.of((page-1), size, Sort.by(Sort.Direction.DESC, "createdAt"));
@@ -136,21 +133,22 @@ public class TransactionHistoryServiceTest {
         List<TransactionHistory> history = List.of(history1, history2);
         Page<TransactionHistory> historyPage = new PageImpl<>(history, pageable, 2);
 
-        Mockito.when(principalService.getPrincipal()).thenReturn(principal);
+        ArgumentCaptor<Specification<TransactionHistory>> captor = ArgumentCaptor.forClass(Specification.class);
+
+        Mockito.when(transactionHistoryRepository.findAll(captor.capture(), Mockito.eq(pageable))).thenReturn(historyPage);
+
         Mockito.when(userRepository.findById(userId)).thenReturn(Optional.of(pgUser));
-        Mockito.when(transactionHistoryRepository.findAllByPaymentGateawayAdminId(userId, pageable)).thenReturn(historyPage);
 
         PageResponseDto<TransactionHistoryResponseDto> result = transactionHistoryService.getAllHistories(page, size, userId.toString(), pgRole.getCode());
 
         Assertions.assertEquals(2, result.getTotalElements());
         Assertions.assertEquals("TRX-001", result.getData().getFirst().getCode());
-        Mockito.verify(transactionHistoryRepository, Mockito.times(1)).findAllByPaymentGateawayAdminId(userId, pageable);
+        Mockito.verify(transactionHistoryRepository, Mockito.times(1)).findAll(Mockito.any(Specification.class), Mockito.any(Pageable.class));
     }
 
     @Test
     public void shouldReturnAllHistories_whenUserIsCustomer() {
-        transactionHistoryService.setPrincipalService(principalService);
-        // Arrange
+
         UUID userId = UUID.randomUUID();
 
         Role customerRole = new Role();
@@ -160,8 +158,6 @@ public class TransactionHistoryServiceTest {
         customer.setId(userId);
         customer.setRole(customerRole);
 
-        AuthorizationPojo principal = new AuthorizationPojo(customer.getId().toString(), customerRole.getCode());
-
         int page = 1;
         int size = 5;
         Pageable pageable = PageRequest.of((page-1), size, Sort.by(Sort.Direction.DESC, "createdAt"));
@@ -189,16 +185,16 @@ public class TransactionHistoryServiceTest {
         List<TransactionHistory> history = List.of(history1, history2);
         Page<TransactionHistory> historyPage = new PageImpl<>(history, pageable, 2);
 
-        Mockito.when(principalService.getPrincipal()).thenReturn(principal);
-        Mockito.when(userRepository.findById(userId)).thenReturn(Optional.of(customer));
-        Mockito.when(transactionHistoryRepository.findAllByCustomerId(userId, pageable)).thenReturn(historyPage);
+        ArgumentCaptor<Specification<TransactionHistory>> captor = ArgumentCaptor.forClass(Specification.class);
 
-        // Act
+        Mockito.when(transactionHistoryRepository.findAll(captor.capture(), Mockito.eq(pageable))).thenReturn(historyPage);
+
+        Mockito.when(userRepository.findById(userId)).thenReturn(Optional.of(customer));
+
         PageResponseDto<TransactionHistoryResponseDto> result = transactionHistoryService.getAllHistories(page, size, userId.toString(), customerRole.getCode());
 
-        // Assert
         Assertions.assertEquals(2, result.getTotalElements());
         Assertions.assertEquals("TRX-001", result.getData().getFirst().getCode());
-        Mockito.verify(transactionHistoryRepository, Mockito.times(1)).findAllByCustomerId(userId, pageable);
+        Mockito.verify(transactionHistoryRepository, Mockito.times(1)).findAll(Mockito.any(Specification.class), Mockito.any(Pageable.class));
     }
 }

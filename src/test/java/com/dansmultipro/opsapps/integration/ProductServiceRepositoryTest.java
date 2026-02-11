@@ -47,7 +47,6 @@ public class ProductServiceRepositoryTest {
     void setUp() {
         productRepository.deleteAll();
 
-        // Create test data
         testProduct = new Product();
         testProduct.setId(UUID.randomUUID());
         testProduct.setName("Test Product");
@@ -59,7 +58,6 @@ public class ProductServiceRepositoryTest {
 
     private void setupAuthentication(String role) {
 
-        //Create user data
         AuthorizationPojo principal = new AuthorizationPojo(UUID.randomUUID().toString(), RoleCode.SA.name());
 
         UsernamePasswordAuthenticationToken authentication =
@@ -73,10 +71,9 @@ public class ProductServiceRepositoryTest {
 
     @Test
     void testFindById_Success() {
-        // When
+
         ProductResponseDto result = productService.findById(testProduct.getId().toString());
 
-        // Then
         assertThat(result).isNotNull();
         assertThat(result.getId()).isEqualTo(testProduct.getId());
         assertThat(result.getName()).isEqualTo("Test Product");
@@ -85,7 +82,7 @@ public class ProductServiceRepositoryTest {
 
     @Test
     void testFindAll_Success() {
-        // Given - create additional products
+
         Product product2 = new Product();
         product2.setId(UUID.randomUUID());
         product2.setName("Product 2");
@@ -102,10 +99,8 @@ public class ProductServiceRepositoryTest {
         product3.setCreatedBy(UUID.randomUUID());
         productRepository.save(product3);
 
-        // When
         PageResponseDto<ProductResponseDto> result = productService.findAll(1, 5);
 
-        // Then
         assertThat(result).isNotNull();
         assertThat(result.getData().size()).isEqualTo(3);
         assertThat(result.getTotalElements()).isEqualTo(3);
@@ -116,20 +111,16 @@ public class ProductServiceRepositoryTest {
     void testCreateProduct_Success() {
         setupAuthentication(RoleCode.SA.name());
 
-        // Given
         ProductRequestDto requestDto = new ProductRequestDto();
         requestDto.setName("New Product");
         requestDto.setCode("NEW001");
 
-        // When
         CreateResponseDto result = productService.createProduct(requestDto);
 
-        // Then
         assertThat(result).isNotNull();
         assertThat(result.getId()).isNotNull();
         assertThat(result.getMessage()).isEqualTo("Product created successfully");
 
-        // Verify in database
         Product savedProduct = productRepository.findById(result.getId()).orElseThrow();
         assertThat(savedProduct.getName()).isEqualTo("New Product");
         assertThat(savedProduct.getCode()).isEqualTo("NEW001");
@@ -139,23 +130,19 @@ public class ProductServiceRepositoryTest {
     void testUpdateProduct_Success() {
         setupAuthentication(RoleCode.SA.name());
 
-        // Given
         UpdateProductRequestDto requestDto = new UpdateProductRequestDto();
         requestDto.setName("Updated Product");
         requestDto.setCode("UPDATED001");
         requestDto.setVersion(testProduct.getVersion());
 
-        // When
         UpdateResponseDto result = productService.updateProduct(
                 testProduct.getId().toString(),
                 requestDto
         );
 
-        // Then
         assertThat(result).isNotNull();
         assertThat(result.getMessage()).isEqualTo("Product updated successfully");
 
-        // Verify in database
         Product updatedProduct = productRepository.findById(testProduct.getId()).orElseThrow();
         assertThat(updatedProduct.getName()).isEqualTo("Updated Product");
         assertThat(updatedProduct.getCode()).isEqualTo("UPDATED001");
