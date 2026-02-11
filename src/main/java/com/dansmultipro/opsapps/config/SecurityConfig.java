@@ -1,6 +1,5 @@
 package com.dansmultipro.opsapps.config;
 
-//import com.dansmultipro.opsapps.filter.RateLimiterFilter;
 import com.dansmultipro.opsapps.filter.RateLimiterFilter;
 import com.dansmultipro.opsapps.filter.TokenFilter;
 import com.dansmultipro.opsapps.service.UserService;

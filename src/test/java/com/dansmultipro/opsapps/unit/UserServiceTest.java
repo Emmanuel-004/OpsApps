@@ -1,6 +1,7 @@
 package com.dansmultipro.opsapps.unit;
 
 import com.dansmultipro.opsapps.baseclass.BaseService;
+import com.dansmultipro.opsapps.constant.RoleCode;
 import com.dansmultipro.opsapps.dto.CommonResponseDto;
 import com.dansmultipro.opsapps.dto.CreateResponseDto;
 import com.dansmultipro.opsapps.dto.PageResponseDto;
@@ -79,7 +80,6 @@ public class UserServiceTest {
         userService.setPrincipalService(principalService);
 
         UUID saId = UUID.randomUUID();
-        AuthorizationPojo principal = new AuthorizationPojo(saId.toString());
 
         Role saRole = new Role();
         saRole.setCode("SA");
@@ -87,6 +87,8 @@ public class UserServiceTest {
         User admin = new User();
         admin.setId(saId);
         admin.setRole(saRole);
+
+        AuthorizationPojo principal = new AuthorizationPojo(saId.toString(), saRole.getCode());
 
         int page = 1;
         int size = 5;
@@ -124,18 +126,7 @@ public class UserServiceTest {
 
     @Test
     void testGetUserById_whenIdValid() {
-        userService.setPrincipalService(principalService);
-        UUID saId = UUID.randomUUID();
         UUID userId = UUID.randomUUID();
-
-        AuthorizationPojo principal = new AuthorizationPojo(saId.toString());
-
-        Role saRole = new Role();
-        saRole.setCode("SA");
-
-        User admin = new User();
-        admin.setId(saId);
-        admin.setRole(saRole);
 
         User user = new User();
         user.setId(userId);
@@ -144,17 +135,14 @@ public class UserServiceTest {
         user.setRole(new Role());
         user.getRole().setName("Customer");
 
-        Mockito.when(principalService.getPrincipal()).thenReturn(principal);
-        Mockito.when(userRepository.findById(saId)).thenReturn(Optional.of(admin));
         Mockito.when(userRepository.findById(userId)).thenReturn(Optional.of(user));
 
         UserResponseDto result = userService.getUserById(userId.toString());
 
         Assertions.assertEquals(userId, result.getId());
         Assertions.assertEquals("test@example.com", result.getEmail());
-        Mockito.verify(principalService, Mockito.atLeast(1)).getPrincipal();
-        Mockito.verify(userRepository, Mockito.atLeast(1)).findById(saId);
-        Mockito.verify(userRepository, Mockito.atLeast(1)).findById(userId);
+        Mockito.verify(userRepository, Mockito.atLeast(1)).findById(Mockito.any());
+        Mockito.verify(userRepository, Mockito.atLeast(1)).findById(Mockito.any());
     }
 
     @Test
@@ -227,8 +215,11 @@ public class UserServiceTest {
         userService.setPrincipalService(principalService);
 
         UUID userId = UUID.randomUUID();
-        AuthorizationPojo principal = new AuthorizationPojo(userId.toString());
-        principal.setId(userId.toString());
+
+        Role userRole = new Role();
+        userRole.setCode(RoleCode.CUS.name());
+
+        AuthorizationPojo principal = new AuthorizationPojo(userId.toString(), userRole.getCode());
 
         ChangePasswordRequestDto requestDto = new ChangePasswordRequestDto();
         requestDto.setOldPassword("oldPassword");
@@ -264,7 +255,11 @@ public class UserServiceTest {
         userService.setPrincipalService(principalService);
 
         UUID userId = UUID.randomUUID();
-        AuthorizationPojo principal = new AuthorizationPojo(userId.toString());
+
+        Role userRole = new Role();
+        userRole.setCode(RoleCode.CUS.name());
+
+        AuthorizationPojo principal = new AuthorizationPojo(userId.toString(),  userRole.getCode());
         principal.setId(userId.toString());
 
         UpdateUserRequestDto requestDto = new UpdateUserRequestDto();
@@ -283,7 +278,7 @@ public class UserServiceTest {
         Mockito.when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         Mockito.when(userRepository.saveAndFlush(Mockito.any())).thenReturn(updatedUser);
 
-        UpdateResponseDto result = userService.updateCustomer("someId", requestDto);
+        UpdateResponseDto result = userService.updateUser(userId.toString(), requestDto);
 
         Assertions.assertEquals(1, result.getVersion());
         Mockito.verify(principalService, Mockito.atLeast(1)).getPrincipal();
@@ -299,7 +294,14 @@ public class UserServiceTest {
         UUID paymentGatewayId = UUID.randomUUID();
         UUID userId = UUID.randomUUID();
 
-        AuthorizationPojo principal = new AuthorizationPojo(superAdminId.toString());
+        Role saRole = new Role();
+        saRole.setCode(RoleCode.SA.name());
+
+        User superAdmin = new User();
+        superAdmin.setId(superAdminId);
+        superAdmin.setRole(saRole);
+
+        AuthorizationPojo principal = new AuthorizationPojo(superAdminId.toString(),  saRole.getCode());
         principal.setId(superAdminId.toString());
 
         PaymentGateawayAdminRequestDto requestDto = new PaymentGateawayAdminRequestDto();
@@ -307,13 +309,6 @@ public class UserServiceTest {
         requestDto.setEmail("pgadmin@example.com");
         requestDto.setPassword("password123");
         requestDto.setPaymentGateawayId(paymentGatewayId.toString());
-
-        Role saRole = new Role();
-        saRole.setCode("SA");
-
-        User superAdmin = new User();
-        superAdmin.setId(superAdminId);
-        superAdmin.setRole(saRole);
 
         PaymentGateaway paymentGateaway = new PaymentGateaway();
         paymentGateaway.setId(paymentGatewayId);

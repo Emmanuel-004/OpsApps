@@ -74,13 +74,15 @@ public class TransactionServiceTest {
         transactionService.setPrincipalService(principalService);
 
         UUID userId = UUID.randomUUID();
-        AuthorizationPojo principal = new AuthorizationPojo(userId.toString());
 
         Role saRole = new Role();
         saRole.setCode(RoleCode.SA.name());
+
         User saUser = new User();
         saUser.setId(userId);
         saUser.setRole(saRole);
+
+        AuthorizationPojo principal = new AuthorizationPojo(saUser.getId().toString(), saRole.getCode());
 
         int page = 1;
         int size = 5;
@@ -109,16 +111,12 @@ public class TransactionServiceTest {
 
         Page<Transaction> transactionPage = new PageImpl<>(List.of(transaction), pageable, 1);
 
-        Mockito.when(principalService.getPrincipal()).thenReturn(principal);
-        Mockito.when(userRepository.findById(userId)).thenReturn(Optional.of(saUser));
         Mockito.when(transactionRepository.findAll(pageable)).thenReturn(transactionPage);
 
-        PageResponseDto<TransactionResponseDto> result = transactionService.getAllTransactions(page, size);
+        PageResponseDto<TransactionResponseDto> result = transactionService.getAllTransactions(page, size, saUser.getId().toString(), saRole.getCode());
 
         Assertions.assertEquals(1, result.getTotalElements());
         Assertions.assertEquals("TRX-001", result.getData().getFirst().getTransactionCode());
-        Mockito.verify(principalService, Mockito.atLeast(1)).getPrincipal();
-        Mockito.verify(userRepository, Mockito.atLeast(1)).findById(userId);
         Mockito.verify(transactionRepository, Mockito.atLeast(1)).findAll(pageable);
     }
 
@@ -127,13 +125,15 @@ public class TransactionServiceTest {
         transactionService.setPrincipalService(principalService);
 
         UUID userId = UUID.randomUUID();
-        AuthorizationPojo principal = new AuthorizationPojo(userId.toString());
 
         Role pgRole = new Role();
         pgRole.setCode(RoleCode.PG.name());
+
         User pgUser = new User();
         pgUser.setId(userId);
         pgUser.setRole(pgRole);
+
+        AuthorizationPojo principal = new AuthorizationPojo(pgUser.getId().toString(), pgRole.getCode());
 
         int page = 1;
         int size = 5;
@@ -162,15 +162,11 @@ public class TransactionServiceTest {
 
         Page<Transaction> transactionPage = new PageImpl<>(List.of(transaction), pageable, 1);
 
-        Mockito.when(principalService.getPrincipal()).thenReturn(principal);
-        Mockito.when(userRepository.findById(userId)).thenReturn(Optional.of(pgUser));
         Mockito.when(transactionRepository.findAllByAdminId(userId, pageable)).thenReturn(transactionPage);
 
-        PageResponseDto<TransactionResponseDto> result = transactionService.getAllTransactions(page, size);
+        PageResponseDto<TransactionResponseDto> result = transactionService.getAllTransactions(page, size, pgUser.getId().toString(), pgRole.getCode());
 
         Assertions.assertEquals(1, result.getTotalElements());
-        Mockito.verify(principalService, Mockito.atLeast(1)).getPrincipal();
-        Mockito.verify(userRepository, Mockito.atLeast(1)).findById(Mockito.any());
         Mockito.verify(transactionRepository, Mockito.atLeast(1)).findAllByAdminId(userId, pageable);
     }
 
@@ -179,13 +175,15 @@ public class TransactionServiceTest {
         transactionService.setPrincipalService(principalService);
 
         UUID userId = UUID.randomUUID();
-        AuthorizationPojo principal = new AuthorizationPojo(userId.toString());
 
         Role customerRole = new Role();
         customerRole.setCode(RoleCode.CUS.name());
+
         User customer = new User();
         customer.setId(userId);
         customer.setRole(customerRole);
+
+        AuthorizationPojo principal = new AuthorizationPojo(customer.getId().toString(), customerRole.getCode());
 
         int page = 1;
         int size = 5;
@@ -210,16 +208,14 @@ public class TransactionServiceTest {
 
         Page<Transaction> transactionPage = new PageImpl<>(List.of(transaction), pageable, 1);
 
-        Mockito.when(principalService.getPrincipal()).thenReturn(principal);
         Mockito.when(userRepository.findById(userId)).thenReturn(Optional.of(customer));
         Mockito.when(transactionRepository.findAllByCustomer_id(userId, pageable)).thenReturn(transactionPage);
 
-        PageResponseDto<TransactionCustomerResponseDto> result = transactionService.getAllTransactionsByCustomer(page, size);
+        PageResponseDto<TransactionCustomerResponseDto> result = transactionService.getAllTransactionsByCustomer(page, size, customer.getId().toString(), customerRole.getCode());
 
         Assertions.assertEquals(1, result.getTotalElements());
         Assertions.assertEquals("TRX-003", result.getData().getFirst().getTransactionCode());
 
-        Mockito.verify(principalService, Mockito.atLeast(1)).getPrincipal();
         Mockito.verify(userRepository, Mockito.atLeast(1)).findById(userId);
         Mockito.verify(transactionRepository, Mockito.atLeast(1)).findAllByCustomer_id(userId, pageable);
     }
@@ -231,14 +227,16 @@ public class TransactionServiceTest {
         UUID customerId = UUID.randomUUID();
         UUID productId = UUID.randomUUID();
         UUID paymentGatewayId = UUID.randomUUID();
-        AuthorizationPojo principal = new AuthorizationPojo(customerId.toString());
 
         Role customerRole = new Role();
         customerRole.setCode(RoleCode.CUS.name());
+
         User customer = new User();
         customer.setId(customerId);
         customer.setRole(customerRole);
         customer.setEmail("customer@example.com");
+
+        AuthorizationPojo principal = new AuthorizationPojo(customerId.toString(), customerRole.getCode());
 
         PaymentGateaway paymentGateaway = new PaymentGateaway();
         paymentGateaway.setId(paymentGatewayId);
@@ -306,13 +304,15 @@ public class TransactionServiceTest {
         UUID transactionId = UUID.randomUUID();
         UUID gatewayAdminId = UUID.randomUUID();
         UUID paymentGatewayId = UUID.randomUUID();
-        AuthorizationPojo principal = new AuthorizationPojo(gatewayAdminId.toString());
 
         Role pgRole = new Role();
         pgRole.setCode(RoleCode.PG.name());
+
         User pgAdmin = new User();
         pgAdmin.setId(gatewayAdminId);
         pgAdmin.setRole(pgRole);
+
+        AuthorizationPojo principal = new AuthorizationPojo(pgAdmin.getId().toString(), pgRole.getCode());
 
         PaymentGateaway paymentGateaway = new PaymentGateaway();
         paymentGateaway.setId(paymentGatewayId);
@@ -353,8 +353,7 @@ public class TransactionServiceTest {
 
         Mockito.when(principalService.getPrincipal()).thenReturn(principal);
         Mockito.when(transactionRepository.findById(transactionId)).thenReturn(Optional.of(transaction));
-        Mockito.when(userRepository.findById(gatewayAdminId)).thenReturn(Optional.of(pgAdmin));
-        Mockito.when(paymentGateawayAdminRepository.findByGateawayAdminAndPaymentGateaway(pgAdmin, paymentGateaway)).thenReturn(Optional.of(paymentGatewayAdmin));
+        Mockito.when(paymentGateawayAdminRepository.findByGateawayAdminIdAndPaymentGateawayId(pgAdmin.getId(), paymentGatewayId)).thenReturn(Optional.of(paymentGatewayAdmin));
         Mockito.when(transactionStatusRepository.findByCodeEqualsIgnoreCase("APPROVED")).thenReturn(Optional.of(approvedStatus));
         Mockito.when(transactionRepository.save(Mockito.any())).thenReturn(updatedTransaction);
         Mockito.when(transactionHistoryRepository.save(Mockito.any())).thenReturn(transactionHistory);
@@ -365,9 +364,7 @@ public class TransactionServiceTest {
 
         Mockito.verify(principalService, Mockito.atLeast(1)).getPrincipal();
         Mockito.verify(transactionRepository, Mockito.atLeast(1)).findById(transactionId);
-        Mockito.verify(userRepository, Mockito.atLeast(1)).findById(gatewayAdminId);
-        Mockito.verify(paymentGateawayAdminRepository, Mockito.atLeast(1))
-                .findByGateawayAdminAndPaymentGateaway(Mockito.any(), Mockito.any());
+        Mockito.verify(paymentGateawayAdminRepository, Mockito.atLeast(1)).findByGateawayAdminIdAndPaymentGateawayId(Mockito.any(), Mockito.any());
         Mockito.verify(transactionStatusRepository, Mockito.atLeast(1)).findByCodeEqualsIgnoreCase(TransactionStatusCode.APPROVED.name());
         Mockito.verify(transactionRepository, Mockito.atLeast(1)).save(Mockito.any());
         Mockito.verify(transactionHistoryRepository, Mockito.atLeast(1)).save(Mockito.any());
@@ -380,13 +377,15 @@ public class TransactionServiceTest {
         UUID transactionId = UUID.randomUUID();
         UUID gatewayAdminId = UUID.randomUUID();
         UUID paymentGatewayId = UUID.randomUUID();
-        AuthorizationPojo principal = new AuthorizationPojo(gatewayAdminId.toString());
 
         Role pgRole = new Role();
         pgRole.setCode(RoleCode.PG.name());
+
         User pgAdmin = new User();
         pgAdmin.setId(gatewayAdminId);
         pgAdmin.setRole(pgRole);
+
+        AuthorizationPojo principal = new AuthorizationPojo(gatewayAdminId.toString(), pgRole.getCode());
 
         PaymentGateaway paymentGateaway = new PaymentGateaway();
         paymentGateaway.setId(paymentGatewayId);
@@ -427,8 +426,7 @@ public class TransactionServiceTest {
 
         Mockito.when(principalService.getPrincipal()).thenReturn(principal);
         Mockito.when(transactionRepository.findById(transactionId)).thenReturn(Optional.of(transaction));
-        Mockito.when(userRepository.findById(gatewayAdminId)).thenReturn(Optional.of(pgAdmin));
-        Mockito.when(paymentGateawayAdminRepository.findByGateawayAdminAndPaymentGateaway(pgAdmin, paymentGateaway)).thenReturn(Optional.of(paymentGatewayAdmin));
+        Mockito.when(paymentGateawayAdminRepository.findByGateawayAdminIdAndPaymentGateawayId(pgAdmin.getId(), paymentGatewayId)).thenReturn(Optional.of(paymentGatewayAdmin));
         Mockito.when(transactionStatusRepository.findByCodeEqualsIgnoreCase("REJECTED")).thenReturn(Optional.of(rejectedStatus));
         Mockito.when(transactionRepository.save(Mockito.any(Transaction.class))).thenReturn(updatedTransaction);
         Mockito.when(transactionHistoryRepository.save(Mockito.any())).thenReturn(transactionHistory);
@@ -439,8 +437,7 @@ public class TransactionServiceTest {
 
         Mockito.verify(principalService, Mockito.atLeast(1)).getPrincipal();
         Mockito.verify(transactionRepository, Mockito.atLeast(1)).findById(transactionId);
-        Mockito.verify(userRepository, Mockito.atLeast(1)).findById(gatewayAdminId);
-        Mockito.verify(paymentGateawayAdminRepository, Mockito.atLeast(1)).findByGateawayAdminAndPaymentGateaway(Mockito.any(), Mockito.any());
+        Mockito.verify(paymentGateawayAdminRepository, Mockito.atLeast(1)).findByGateawayAdminIdAndPaymentGateawayId(Mockito.any(), Mockito.any());
         Mockito.verify(transactionStatusRepository, Mockito.atLeast(1)).findByCodeEqualsIgnoreCase(Mockito.any());
         Mockito.verify(transactionRepository, Mockito.atLeast(1)).save(Mockito.any());
         Mockito.verify(transactionHistoryRepository, Mockito.atLeast(1)).save(Mockito.any());

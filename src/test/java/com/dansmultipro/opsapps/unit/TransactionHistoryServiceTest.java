@@ -43,13 +43,15 @@ public class TransactionHistoryServiceTest {
         transactionHistoryService.setPrincipalService(principalService);
         // Arrange
         UUID userId = UUID.randomUUID();
-        AuthorizationPojo principal = new AuthorizationPojo(userId.toString());
 
         Role saRole = new Role();
         saRole.setCode(RoleCode.SA.name());
+
         User saUser = new User();
         saUser.setId(userId);
         saUser.setRole(saRole);
+
+        AuthorizationPojo principal = new AuthorizationPojo(saUser.getId().toString(), saRole.getCode());
 
         int page = 1;
         int size = 5;
@@ -82,7 +84,7 @@ public class TransactionHistoryServiceTest {
         Mockito.when(userRepository.findById(userId)).thenReturn(Optional.of(saUser));
         Mockito.when(transactionHistoryRepository.findAll(pageable)).thenReturn(historyPage);
 
-        PageResponseDto<TransactionHistoryResponseDto> result = transactionHistoryService.getAllHistories(page, size);
+        PageResponseDto<TransactionHistoryResponseDto> result = transactionHistoryService.getAllHistories(page, size, userId.toString(), saRole.getCode());
 
         Assertions.assertEquals(2, result.getTotalElements());
         Assertions.assertEquals("TRX-001", result.getData().getFirst().getCode());
@@ -97,13 +99,15 @@ public class TransactionHistoryServiceTest {
         transactionHistoryService.setPrincipalService(principalService);
         // Arrange
         UUID userId = UUID.randomUUID();
-        AuthorizationPojo principal = new AuthorizationPojo(userId.toString());
 
         Role pgRole = new Role();
         pgRole.setCode(RoleCode.PG.name());
+
         User pgUser = new User();
         pgUser.setId(userId);
         pgUser.setRole(pgRole);
+
+        AuthorizationPojo principal = new AuthorizationPojo(pgUser.getId().toString(), pgRole.getCode());
 
         int page = 1;
         int size = 5;
@@ -136,7 +140,7 @@ public class TransactionHistoryServiceTest {
         Mockito.when(userRepository.findById(userId)).thenReturn(Optional.of(pgUser));
         Mockito.when(transactionHistoryRepository.findAllByPaymentGateawayAdminId(userId, pageable)).thenReturn(historyPage);
 
-        PageResponseDto<TransactionHistoryResponseDto> result = transactionHistoryService.getAllHistories(page, size);
+        PageResponseDto<TransactionHistoryResponseDto> result = transactionHistoryService.getAllHistories(page, size, userId.toString(), pgRole.getCode());
 
         Assertions.assertEquals(2, result.getTotalElements());
         Assertions.assertEquals("TRX-001", result.getData().getFirst().getCode());
@@ -148,13 +152,15 @@ public class TransactionHistoryServiceTest {
         transactionHistoryService.setPrincipalService(principalService);
         // Arrange
         UUID userId = UUID.randomUUID();
-        AuthorizationPojo principal = new AuthorizationPojo(userId.toString());
 
         Role customerRole = new Role();
         customerRole.setCode(RoleCode.CUS.name());
+
         User customer = new User();
         customer.setId(userId);
         customer.setRole(customerRole);
+
+        AuthorizationPojo principal = new AuthorizationPojo(customer.getId().toString(), customerRole.getCode());
 
         int page = 1;
         int size = 5;
@@ -188,7 +194,7 @@ public class TransactionHistoryServiceTest {
         Mockito.when(transactionHistoryRepository.findAllByCustomerId(userId, pageable)).thenReturn(historyPage);
 
         // Act
-        PageResponseDto<TransactionHistoryResponseDto> result = transactionHistoryService.getAllHistories(page, size);
+        PageResponseDto<TransactionHistoryResponseDto> result = transactionHistoryService.getAllHistories(page, size, userId.toString(), customerRole.getCode());
 
         // Assert
         Assertions.assertEquals(2, result.getTotalElements());

@@ -98,18 +98,20 @@ public class ProductServiceTest {
         productService.setPrincipalService(principalService);
 
         UUID adminId = UUID.randomUUID();
-        AuthorizationPojo principal = new AuthorizationPojo(adminId.toString());
-
-        ProductRequestDto requestDto = new ProductRequestDto();
-        requestDto.setName("New Product");
-        requestDto.setCode("NEW001");
 
         Role role = new Role();
         role.setCode("SA");
         role.setName("Super Administrator");
+
         User admin = new User();
         admin.setId(adminId);
         admin.setRole(role);
+
+        AuthorizationPojo principal = new AuthorizationPojo(adminId.toString(), role.getCode());
+
+        ProductRequestDto requestDto = new ProductRequestDto();
+        requestDto.setName("New Product");
+        requestDto.setCode("NEW001");
 
         Product product = new Product();
         product.setId(UUID.randomUUID());
@@ -117,7 +119,6 @@ public class ProductServiceTest {
         product.setCode(requestDto.getCode());
 
         Mockito.when(principalService.getPrincipal()).thenReturn(principal);
-        Mockito.when(userRepository.findById(adminId)).thenReturn(Optional.of(admin));
         Mockito.when(productRepository.existsByCode(requestDto.getCode())).thenReturn(false);
         Mockito.when(productRepository.existsByName(requestDto.getName())).thenReturn(false);
         Mockito.when(productRepository.save(Mockito.any())).thenReturn(product);
@@ -126,7 +127,6 @@ public class ProductServiceTest {
 
         Assertions.assertEquals(result.getId(),product.getId());
         Mockito.verify(principalService, Mockito.atLeast(1)).getPrincipal();
-        Mockito.verify(userRepository, Mockito.atLeast(1)).findById(Mockito.any());
         Mockito.verify(productRepository, Mockito.times(1)).existsByCode(Mockito.any());
         Mockito.verify(productRepository, Mockito.atLeast(1)).existsByName(Mockito.any());
         Mockito.verify(productRepository, Mockito.atLeast(1)).save(Mockito.any());
@@ -138,14 +138,16 @@ public class ProductServiceTest {
 
         UUID adminId = UUID.randomUUID();
         UUID  productId = UUID.randomUUID();
-        AuthorizationPojo principal = new AuthorizationPojo(adminId.toString());
 
         Role role = new Role();
         role.setCode("SA");
         role.setName("Super Administrator");
+
         User admin = new User();
         admin.setId(adminId);
         admin.setRole(role);
+
+        AuthorizationPojo principal = new AuthorizationPojo(adminId.toString(), role.getCode());
 
         UpdateProductRequestDto requestDto = new UpdateProductRequestDto();
         requestDto.setName("New Product edited");
@@ -165,7 +167,6 @@ public class ProductServiceTest {
         savedProduct.setVersion(1);
 
         Mockito.when(principalService.getPrincipal()).thenReturn(principal);
-        Mockito.when(userRepository.findById(adminId)).thenReturn(Optional.of(admin));
         Mockito.when(productRepository.findById(productId)).thenReturn(Optional.of(product));
         Mockito.when(productRepository.existsByCode(requestDto.getCode())).thenReturn(false);
         Mockito.when(productRepository.existsByName(requestDto.getName())).thenReturn(false);

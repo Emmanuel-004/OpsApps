@@ -85,18 +85,20 @@ public class PaymentGateawayServiceTest {
         paymentGateawayService.setPrincipalService(principalService);
 
         UUID adminId = UUID.randomUUID();
-        AuthorizationPojo principal = new AuthorizationPojo(adminId.toString());
-
-        PaymentGateawayRequestDto  requestDto = new PaymentGateawayRequestDto();
-        requestDto.setName("paymentGateaway 1");
-        requestDto.setCode("G001");
 
         Role role = new Role();
         role.setCode("SA");
         role.setName("Super Administrator");
+
         User admin = new User();
         admin.setId(adminId);
         admin.setRole(role);
+
+        AuthorizationPojo principal = new AuthorizationPojo(admin.getId().toString(), role.getCode());
+
+        PaymentGateawayRequestDto  requestDto = new PaymentGateawayRequestDto();
+        requestDto.setName("paymentGateaway 1");
+        requestDto.setCode("G001");
 
         PaymentGateaway paymentGateaway = new PaymentGateaway();
         paymentGateaway.setId(UUID.randomUUID());
@@ -104,7 +106,6 @@ public class PaymentGateawayServiceTest {
         paymentGateaway.setCode(requestDto.getCode());
 
         Mockito.when(principalService.getPrincipal()).thenReturn(principal);
-        Mockito.when(userRepository.findById(adminId)).thenReturn(Optional.of(admin));
         Mockito.when(paymentGateawayRepository.existsByName(requestDto.getName())).thenReturn(false);
         Mockito.when(paymentGateawayRepository.existsByCode(requestDto.getCode())).thenReturn(false);
         Mockito.when(paymentGateawayRepository.save(Mockito.any())).thenReturn(paymentGateaway);
@@ -114,7 +115,6 @@ public class PaymentGateawayServiceTest {
         Assertions.assertEquals(result.getId(), paymentGateaway.getId());
 
         Mockito.verify(principalService, Mockito.atLeast(1)).getPrincipal();
-        Mockito.verify(userRepository, Mockito.atLeast(1)).findById(Mockito.any());
         Mockito.verify(paymentGateawayRepository, Mockito.atLeast(1)).existsByName(Mockito.any());
         Mockito.verify(paymentGateawayRepository, Mockito.atLeast(1)).existsByCode(Mockito.any());
         Mockito.verify(paymentGateawayRepository, Mockito.atLeast(1)).save(Mockito.any());
@@ -126,19 +126,21 @@ public class PaymentGateawayServiceTest {
 
         UUID adminId = UUID.randomUUID();
         UUID pgId = UUID.randomUUID();
-        AuthorizationPojo principal = new AuthorizationPojo(adminId.toString());
+
+        Role role = new Role();
+        role.setCode("SA");
+        role.setName("Super Administrator");
+
+        User admin = new User();
+        admin.setId(adminId);
+        admin.setRole(role);
+
+        AuthorizationPojo principal = new AuthorizationPojo(admin.getId().toString(), role.getCode());
 
         UpdatePaymentGateawayRequestDto requestDto = new UpdatePaymentGateawayRequestDto();
         requestDto.setName("paymentGateaway1 updated");
         requestDto.setCode("G001");
         requestDto.setVersion(0);
-
-        Role role = new Role();
-        role.setCode("SA");
-        role.setName("Super Administrator");
-        User admin = new User();
-        admin.setId(adminId);
-        admin.setRole(role);
 
         PaymentGateaway paymentGateaway = new PaymentGateaway();
         paymentGateaway.setId(pgId);
@@ -153,7 +155,6 @@ public class PaymentGateawayServiceTest {
         updatedPaymentGateaway.setVersion(1);
 
         Mockito.when(principalService.getPrincipal()).thenReturn(principal);
-        Mockito.when(userRepository.findById(adminId)).thenReturn(Optional.of(admin));
         Mockito.when(paymentGateawayRepository.findById(pgId)).thenReturn(Optional.of(paymentGateaway));
         Mockito.when(paymentGateawayRepository.save(Mockito.any())).thenReturn(updatedPaymentGateaway);
 
@@ -161,7 +162,6 @@ public class PaymentGateawayServiceTest {
 
         Assertions.assertEquals(1, result.getVersion());
         Mockito.verify(principalService, Mockito.atLeast(1)).getPrincipal();
-        Mockito.verify(userRepository, Mockito.atLeast(1)).findById(Mockito.any());
         Mockito.verify(paymentGateawayRepository, Mockito.atLeast(1)).findById(Mockito.any());
         Mockito.verify(paymentGateawayRepository, Mockito.atLeast(1)).save(Mockito.any());
 

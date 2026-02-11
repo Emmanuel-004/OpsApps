@@ -1,26 +1,20 @@
-package com.dansmultipro.opsapps.contoller;
+package com.dansmultipro.opsapps.controller;
 
 import com.dansmultipro.opsapps.dto.auth.LoginRequestDto;
 import com.dansmultipro.opsapps.dto.auth.LoginResponseDto;
 import com.dansmultipro.opsapps.dto.auth.RefreshTokenRequestDto;
 import com.dansmultipro.opsapps.dto.auth.RefreshTokenResponseDto;
+import com.dansmultipro.opsapps.exception.TokenMismatchException;
 import com.dansmultipro.opsapps.service.UserService;
 import com.dansmultipro.opsapps.util.JwtUtil;
 import io.jsonwebtoken.Claims;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
-import java.sql.Timestamp;
-import java.time.LocalDateTime;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("api/auth")
@@ -50,16 +44,16 @@ public class AuthController {
         );
     }
 
-    @PostMapping("/refresh")
+    @GetMapping("/refresh")
     public ResponseEntity<RefreshTokenResponseDto> refresh(@RequestBody @Valid RefreshTokenRequestDto requestDto) {
         Claims claims = jwtUtil.validateToken(requestDto.getRefreshToken());
 
         if (!jwtUtil.isRefreshToken(claims)) {
-            throw new RuntimeException("Invalid refresh token");
+            throw new TokenMismatchException("Invalid refresh token");
         }
 
         if (jwtUtil.isTokenExpired(claims)) {
-            throw new RuntimeException("Token expired");
+            throw new TokenMismatchException("Token expired");
         }
 
         String id = jwtUtil.extractId(claims);

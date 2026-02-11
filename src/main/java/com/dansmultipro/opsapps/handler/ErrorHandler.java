@@ -16,7 +16,8 @@ public class ErrorHandler {
     public ResponseEntity<?> handleMethodArgumentNotValidException(
             MethodArgumentNotValidException ex
     ) {
-        var errors = ex.getBindingResult().getAllErrors().stream()
+        var errors = ex.getBindingResult().getAllErrors()
+                .stream()
                 .map((ObjectError oe) -> oe.getDefaultMessage())
                 .toList();
         return new ResponseEntity<>(new ErrorResponseDto<>(errors), HttpStatus.BAD_REQUEST);
@@ -30,12 +31,6 @@ public class ErrorHandler {
 
     @ExceptionHandler(DataIntegrationException.class)
     public ResponseEntity<?> handleDataIntegrationException(RuntimeException ex){
-        String error = ex.getMessage();
-        return new ResponseEntity<>(new ErrorResponseDto<>(error), HttpStatus.BAD_REQUEST);
-    }
-
-    @ExceptionHandler(MultipleDataException.class)
-    public ResponseEntity<?> handleNotMultipleException(RuntimeException ex) {
         String error = ex.getMessage();
         return new ResponseEntity<>(new ErrorResponseDto<>(error), HttpStatus.BAD_REQUEST);
     }
@@ -56,5 +51,11 @@ public class ErrorHandler {
     public ResponseEntity<?> handleRateLimitExceededException(RuntimeException ex) {
         String error = ex.getMessage();
         return new ResponseEntity<>(new ErrorResponseDto<>(error), HttpStatus.TOO_MANY_REQUESTS);
+    }
+
+    @ExceptionHandler(TokenMismatchException.class)
+    public ResponseEntity<?> handleTokenMismatchException(RuntimeException ex) {
+        String error = ex.getMessage();
+        return new ResponseEntity<>(new ErrorResponseDto<>(error), HttpStatus.BAD_REQUEST);
     }
 }

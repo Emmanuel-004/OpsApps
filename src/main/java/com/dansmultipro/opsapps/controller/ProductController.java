@@ -1,4 +1,4 @@
-package com.dansmultipro.opsapps.contoller;
+package com.dansmultipro.opsapps.controller;
 
 import com.dansmultipro.opsapps.dto.CreateResponseDto;
 import com.dansmultipro.opsapps.dto.DeleteResponseDto;
